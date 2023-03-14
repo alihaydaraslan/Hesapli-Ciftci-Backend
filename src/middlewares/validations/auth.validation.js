@@ -43,15 +43,6 @@ class authValidation {
             "string.max": "Þifre en fazla 36 karakterden oluþmalýdýr!",
             "string.required": "Þifre alaný zorunludur!",
           }),
-          phone: joi
-            .string()
-            .trim()
-            .strict()
-            .regex(/^[0-9]{10}$/)
-            .messages({
-              "string.pattern.base": `Telefon numarasý 10 haneden oluþmalýdýr!`,
-            })
-            .required(),
         })
         .validateAsync(req.body);
     } catch (error) {

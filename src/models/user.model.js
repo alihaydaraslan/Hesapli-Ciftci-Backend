@@ -23,11 +23,15 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    phone: {
-      type: String,
-      required: true,
-      match: /^[0-9]{10}$/
+    isVerified: {
+      type: Boolean,
+      default: false
     },
+    // phone: {
+    //   type: String,
+    //   required: true,
+    //   match: /^[0-9]{10}$/
+    // },
   },
   {
     collection: "users",
