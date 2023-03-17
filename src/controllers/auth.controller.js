@@ -1,11 +1,11 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const APIError = require("../utils/errors");
 const Response = require("../utils/response");
 const { createToken } = require("../middlewares/auth");
 const categorymodel = require("../models/category.model");
 const income = require("../models/income.model");
-const UserOTPVerification = require("../models/userotpverification.model");
 const nodemailer = require("nodemailer");
 
 let transporter = nodemailer.createTransport({
@@ -28,32 +28,10 @@ transporter.verify((error, success) => {
 });
 
 const login = async (req, res) => {
-  /*
-  const { userEmailPhone, password } = req.body;
-
-  const userInfo = await user.findOne({
-    $or: [
-      {
-        email: userEmailPhone,
-      },
-      {
-        phone: userEmailPhone,
-      },
-    ],
-  });
-
-  const comparePassword = await bcrypt.compare(password, userInfo.password);
-
-  if (!userInfo || !comparePassword)
-    throw new APIError("Email, phone number or password is incorrect!", 401);
-  */
-
   let userInfo;
 
   userInfo = await User.findOne({ email: req.body.email });
-  if (!userInfo) userInfo = await User.findOne({ phone: req.body.phone });
-  if (!userInfo)
-    throw new APIError("Email, phone number or password is incorrect!", 401);
+  if (!userInfo) throw new APIError("Email or password is incorrect!", 401);
 
   const validatedUser = await bcrypt.compare(
     req.body.password,
@@ -61,93 +39,56 @@ const login = async (req, res) => {
   );
 
   if (!validatedUser)
-    throw new APIError("Email, phone number or password is incorrect!", 401);
+    throw new APIError("Email or password is incorrect!", 401);
 
   createToken(userInfo, res);
 };
 
-// const register = async (req, res) => {
-//   const { email, phone } = req.body;
-
-//   const emailCheck = await user.findOne({ email });
-//   const phoneNrCheck = await user.findOne({ phone });
-
-//   if (emailCheck || phoneNrCheck) {
-//     throw new APIError("Mail or phone number is already on use!", 401);
-//   }
-
-//   req.body.password = await bcrypt.hash(req.body.password, 10);
-
-//   const userSave = new user(req.body);
-
-//   await userSave
-//     .save()
-//     .then((data) => {
-//       return new Response(data, "Registration successfully added!").created(
-//         res
-//       );
-//     })
-//     .catch((err) => {
-//       throw new APIError(err, 400);
-//     });
-// };
-
 const register = async (req, res) => {
-  let { name, lastname, email, password } = req.body;
+  try {
+    let { name, lastname, email, password } = req.body;
 
-  name = name.trim();
-  lastname = lastname.trim();
-  email = email.trim();
-  password = password.trim();
+    name = name.trim();
+    lastname = lastname.trim();
+    email = email.trim();
+    password = password.trim();
 
-  const emailCheck = await User.findOne({ email });
+    const emailCheck = await User.findOne({ email });
 
-  if (emailCheck) {
-    throw new APIError("Mail is already on use!", 401);
-  }
+    if (emailCheck) {
+      throw new APIError("Mail is already on use!", 401);
+    }
 
-  bcrypt.hash(password, 10).then((hashedPassword) => {
-    const userSave = new User({
+    const user = new User({
       name,
       lastname,
       email,
-      password: hashedPassword,
+      password,
+      emailToken: crypto.randomBytes(64).toString("hex"),
     });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(user.password, salt);
+    user.password = hashedPassword;
 
-    userSave
-      .save()
-      .then((result) => {
-        sendOTPVerificationEmail(result, res);
-      })
-      .catch((err) => {
-        throw new APIError(err, 400);
-      });
-  });
-};
-
-const sendOTPVerificationEmail = async (user, res) => {
-  try {
-    const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
+    await user.save();
 
     const mailOptions = {
       from: process.env.AUTH_EMAIL,
       to: user.email,
-      subject: "Emailinizi doðrulayýn",
-      html: `<p> Email adresinizi doðrulamak için ${otp} kodunu kullanýn. </p>
-      <p> Bu kod <b>1 saat içinde</b> geçerliliðini yitirir </p>`,
+      subject: "Verify your email",
+      html: `<h2> ${user.name} ${user.lastname}, thanks for registering on our site! </h2>
+             <h4> Please verify your email address to continue.. </h4>
+             <a href="http://${req.headers.host}/auth/verify-email?token=${user.emailToken}"> Verify your email address </a>
+      `,
     };
 
-    const hashedOTP = await bcrypt.hash(otp, 10);
-
-    const newOTPVerification = await new UserOTPVerification({
-      userId: user._id,
-      otp: hashedOTP,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 3600000,
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        throw new Error(error);
+      } else {
+        throw new APIError("Verification email sent to your account", 400);
+      }
     });
-
-    await newOTPVerification.save();
-    transporter.sendMail(mailOptions);
 
     res.json({
       status: "PENDING",
@@ -157,75 +98,148 @@ const sendOTPVerificationEmail = async (user, res) => {
         email: user.email,
       },
     });
+
+    // bcrypt.hash(password, 10).then(async (hashedPassword) => {
+    //   const user = new User({
+    //     name,
+    //     lastname,
+    //     email,
+    //     password: hashedPassword,
+    //     emailToken: crypto.randomBytes(64).toString("hex"),
+    //   });
+
+    //   userSave
+    //     .save()
+    //     .then((result) => {
+    //       sendOTPVerificationEmail(result, res);
+    //     })
+    //     .catch((err) => {
+    //       throw new APIError(err, 400);
+    //     });
+    // });
   } catch (error) {
-    status: "FAILED";
-    message: error.message;
+    throw new APIError(error, 400);
   }
 };
 
-const verifyotp = async (req, res) => {
+const verifyemail = async (req, res) => {
   try {
-    let { userId, otp } = req.body;
-    if (!userId || !otp) {
-      throw Error("Empty otp details");
+    const token = req.query.token;
+    const user = await User.findOne({ emailToken: token });
+
+    if (user) {
+      user.emailToken = null;
+      user.isVerified = true;
+      await user.save();
     } else {
-      let UserOTPVerificationRecords = await UserOTPVerification.find({
-        userId,
-      });
-
-      if (UserOTPVerificationRecords.length <= 0) {
-        throw new Error(
-          "Account record doesn't exist or has been verified already. Please register or login"
-        );
-      } else {
-        const { expiresAt } = UserOTPVerificationRecords[0];
-        const hashedOTP = UserOTPVerificationRecords[0].otp;
-
-        if (expiresAt < Date.now()) {
-          await UserOTPVerification.deleteMany({ userId });
-          throw new Error("Code has expired. Please request again");
-        } else {
-          const validOTP = await bcrypt.compare(otp, hashedOTP);
-
-          if (!validOTP) {
-            throw new Error("Invalid code. Check your inbox");
-          } else {
-            await User.updateOne({ _id: userId }, { isVerified: true });
-            await UserOTPVerification.deleteMany({ userId });
-
-            res.json({
-              status: "Verified",
-              message: `User email verified successfully`,
-            });
-          }
-        }
-      }
+      throw new Error("Email is not verified", 400);
     }
   } catch (error) {
-    res.json({
-      status: "Failed",
-      message: error.message,
-    });
+    throw new APIError(error, 400);
   }
 };
 
-const resendotpverificationcode = async (req, res) => {
-  try {
-    let { userId, email } = req.body;
+// const sendOTPVerificationEmail = async (user, res) => {
+//   try {
+//     const otp = `${Math.floor(1000 + Math.random() * 9000)}`;
 
-    if (!userId || !email) {
-      throw new Error("Empty user details are not allowed");
-    } else {
-      await UserOTPVerification.deleteMany({ userId });
-      sendOTPVerificationEmail({ _id: userId, email }, res);
-    }
-  } catch (error) {
-    res.json({
-      status: "Failed",
-      message: error.message,
-    });
-  }
-};
+//     const mailOptions = {
+//       from: process.env.AUTH_EMAIL,
+//       to: user.email,
+//       subject: "Emailinizi doðrulayýn",
+//       html: `<p> Email adresinizi doðrulamak için ${otp} kodunu kullanýn. </p>
+//       <p> Bu kod <b>1 saat içinde</b> geçerliliðini yitirir </p>`,
+//     };
+
+//     const hashedOTP = await bcrypt.hash(otp, 10);
+
+//     const newOTPVerification = await new UserOTPVerification({
+//       userId: user._id,
+//       otp: hashedOTP,
+//       createdAt: Date.now(),
+//       expiresAt: Date.now() + 3600000,
+//     });
+
+//     await newOTPVerification.save();
+//     transporter.sendMail(mailOptions);
+
+//     res.json({
+//       status: "PENDING",
+//       message: "Verification otp email sent",
+//       data: {
+//         userId: user._id,
+//         email: user.email,
+//       },
+//     });
+//   } catch (error) {
+//     status: "FAILED";
+//     message: error.message;
+//   }
+// };
+
+// const verifyotp = async (req, res) => {
+//   try {
+//     let { userId, otp } = req.body;
+//     if (!userId || !otp) {
+//       throw Error("Empty otp details");
+//     } else {
+//       let UserOTPVerificationRecords = await UserOTPVerification.find({
+//         userId,
+//       });
+
+//       if (UserOTPVerificationRecords.length <= 0) {
+//         throw new Error(
+//           "Account record doesn't exist or has been verified already. Please register or login"
+//         );
+//       } else {
+//         const { expiresAt } = UserOTPVerificationRecords[0];
+//         const hashedOTP = UserOTPVerificationRecords[0].otp;
+
+//         if (expiresAt < Date.now()) {
+//           await UserOTPVerification.deleteMany({ userId });
+//           throw new Error("Code has expired. Please request again");
+//         } else {
+//           const validOTP = await bcrypt.compare(otp, hashedOTP);
+
+//           if (!validOTP) {
+//             throw new Error("Invalid code. Check your inbox");
+//           } else {
+//             await User.updateOne({ _id: userId }, { isVerified: true });
+//             await UserOTPVerification.deleteMany({ userId });
+
+//             res.json({
+//               status: "Verified",
+//               message: `User email verified successfully`,
+//             });
+//           }
+//         }
+//       }
+//     }
+//   } catch (error) {
+//     res.json({
+//       status: "Failed",
+//       message: error.message,
+//     });
+//   }
+// };
+
+// const resendotpverificationcode = async (req, res) => {
+//   try {
+//     let { userId, email } = req.body;
+
+//     if (!userId || !email) {
+//       throw new Error("Empty user details are not allowed");
+//     } else {
+//       await UserOTPVerification.deleteMany({ userId });
+//       sendOTPVerificationEmail({ _id: userId, email }, res);
+//     }
+//   } catch (error) {
+//     res.json({
+//       status: "Failed",
+//       message: error.message,
+//     });
+//   }
+// };
 
 const me = async (req, res) => {
   return new Response(req.user).success(res);
@@ -276,6 +290,5 @@ module.exports = {
   me,
   addcategory,
   addincome,
-  verifyotp,
-  resendotpverificationcode,
+  verifyemail,
 };
