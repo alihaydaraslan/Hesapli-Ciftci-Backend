@@ -22,10 +22,6 @@ router.get("/me", tokenCheck, me);
 
 router.post("/addcategory", addcategory);
 
-router.post("/addincome", tokenCheck, addincome);
-
-router.post("/addexpense", tokenCheck, addexpense);
-
 router.get("/verify-email", verifyemail);
 
 router.get("/listall", tokenCheck, listAll);
