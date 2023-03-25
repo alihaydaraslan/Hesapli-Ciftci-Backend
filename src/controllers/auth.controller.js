@@ -5,7 +5,8 @@ const APIError = require("../utils/errors");
 const Response = require("../utils/response");
 const { createToken } = require("../middlewares/auth");
 const categorymodel = require("../models/category.model");
-const income = require("../models/income.model");
+const Income = require("../models/income.model");
+const Expense = require("../models/expense.model");
 const nodemailer = require("nodemailer");
 
 let transporter = nodemailer.createTransport({
@@ -78,7 +79,7 @@ const register = async (req, res) => {
       subject: "Verify your email",
       html: `<h2> ${user.name} ${user.lastname}, thanks for registering on our site! </h2>
              <h4> Please verify your email address to continue.. </h4>
-             <a href="http://${req.headers.host}/auth/verify-email?token=${user.emailToken}"> Verify your email address </a>
+             <a href="http://${req.headers.host}/verify-email?token=${user.emailToken}"> Verify your email address </a>
       `,
     };
 
@@ -269,7 +270,7 @@ const addincome = async (req, res) => {
   categoryId = categoryId._id;
 
   try {
-    const newIncome = await income.create({
+    const newIncome = await Income.create({
       userId,
       title,
       quantity,
@@ -284,11 +285,139 @@ const addincome = async (req, res) => {
   }
 };
 
+const addexpense = async (req, res) => {
+  const { title, quantity, comment, date, categoryName } = req.body;
+
+  const userId = req.user._id;
+
+  categoryId = await categorymodel.findOne({ categoryName });
+
+  categoryId = categoryId._id;
+
+  try {
+    const newExpense = await Expense.create({
+      userId,
+      title,
+      quantity,
+      comment,
+      date,
+      categoryId,
+    });
+
+    return res.status(200).send(newExpense);
+  } catch (error) {
+    throw new APIError(error, 500);
+  }
+};
+
+const listAll = async (req, res) => {
+  const { categoryName } = req.body;
+
+  const userId = req.user._id;
+
+  categoryId = await categorymodel.findOne({ categoryName });
+
+  categoryId = categoryId._id;
+
+  categoriesFromIncome = await Income.find({ userId, categoryId });
+  categoriesFromExpense = await Expense.find({ userId, categoryId });
+
+  return new Response(categoriesFromIncome, categoriesFromExpense).success(res);
+};
+
+const find = async (req, res) => {
+  const { key } = req.body;
+
+  const userId = req.user._id;
+
+  let resultIncomeQuantity;
+  let resultExpenseQuantity;
+
+  if (!isNaN(parseInt(key))) {
+    resultIncomeQuantity = await Income.find({
+      userId,
+      quantity: Number(key),
+    });
+    resultExpenseQuantity = await Expense.find({
+      userId,
+      quantity: Number(key),
+    });
+
+    return new Response([
+      ...resultIncomeQuantity,
+      ...resultExpenseQuantity,
+    ]).success(res);
+  }
+
+  let resultIncome = await Income.find({
+    userId,
+    $or: [
+      {
+        title: { $regex: key },
+      },
+      {
+        comment: { $regex: key },
+      },
+      {
+        date: { $regex: key },
+      },
+    ],
+  });
+
+  let resultExpense = await Expense.find({
+    userId,
+    $or: [
+      {
+        title: { $regex: key },
+      },
+      {
+        comment: { $regex: key },
+      },
+      {
+        date: { $regex: key },
+      },
+    ],
+  });
+
+  let categories = await categorymodel.find({ categoryName: { $regex: key } });
+  categoriesIdArray = [];
+  categories.forEach((x) => {
+    categoriesIdArray.push(x._id);
+  });
+
+  let resultCatIdIncome;
+  let resultCatIdExpense;
+
+  if (categoriesIdArray.length > 0) {
+    resultCatIdIncome = await Income.find({
+      userId,
+      categoryId: { $in: categoriesIdArray },
+    });
+
+    resultCatIdExpense = await Expense.find({
+      userId,
+      categoryId: { $in: categoriesIdArray },
+    });
+  }
+  console.log(resultIncome);
+  console.log("************");
+  console.log(resultExpense);
+  return new Response([
+    ...resultCatIdIncome,
+    ...resultCatIdExpense,
+    ...resultIncome,
+    ...resultExpense,
+  ]).success(res);
+};
+
 module.exports = {
   login,
   register,
   me,
   addcategory,
   addincome,
+  addexpense,
   verifyemail,
+  listAll,
+  find,
 };

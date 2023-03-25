@@ -14,7 +14,7 @@ app.use(
   express.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 })
 );
 
-app.use("/auth", router);
+app.use("/", router);
 
 app.get("/", (req, res) => {
   res.json({
