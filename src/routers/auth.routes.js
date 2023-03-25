@@ -5,8 +5,6 @@ const {
   register,
   me,
   addcategory,
-  addincome,
-  addexpense,
   verifyemail,
   listAll,
   find,

@@ -147,9 +147,9 @@ const verifyemail = async (req, res) => {
 //     const mailOptions = {
 //       from: process.env.AUTH_EMAIL,
 //       to: user.email,
-//       subject: "Emailinizi doðrulayýn",
-//       html: `<p> Email adresinizi doðrulamak için ${otp} kodunu kullanýn. </p>
-//       <p> Bu kod <b>1 saat içinde</b> geçerliliðini yitirir </p>`,
+//       subject: "Emailinizi doï¿½rulayï¿½n",
+//       html: `<p> Email adresinizi doï¿½rulamak iï¿½in ${otp} kodunu kullanï¿½n. </p>
+//       <p> Bu kod <b>1 saat iï¿½inde</b> geï¿½erliliï¿½ini yitirir </p>`,
 //     };
 
 //     const hashedOTP = await bcrypt.hash(otp, 10);
@@ -243,6 +243,7 @@ const verifyemail = async (req, res) => {
 // };
 
 const me = async (req, res) => {
+  console.log("ASDFASD");
   return new Response(req.user).success(res);
 };
 
@@ -251,7 +252,7 @@ const addcategory = async (req, res) => {
   try {
     await newcategory.save();
     res.status(200).json({
-      message: "Kategori baþarýyla eklendi!",
+      message: "Kategori baï¿½arï¿½yla eklendi!",
     });
   } catch (error) {
     res.status(500).json({
