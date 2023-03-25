@@ -6,8 +6,4 @@ const { tokenCheck, verifyEmail } = require("../middlewares/auth");
 
 router.post("/addincome", tokenCheck, addincome);
 
-// router.post("/verifyotp", verifyotp);
-
-// router.post("/resendotpverificationcode", resendotpverificationcode);
-
 module.exports = router;

@@ -243,7 +243,6 @@ const verifyemail = async (req, res) => {
 // };
 
 const me = async (req, res) => {
-  console.log("ASDFASD");
   return new Response(req.user).success(res);
 };
 
@@ -262,13 +261,9 @@ const addcategory = async (req, res) => {
 };
 
 const addincome = async (req, res) => {
-  const { title, quantity, comment, date, categoryName } = req.body;
+  const { title, quantity, comment, date, categoryId } = req.body;
 
   const userId = req.user._id;
-
-  categoryId = await categorymodel.findOne({ categoryName });
-
-  categoryId = categoryId._id;
 
   try {
     const newIncome = await Income.create({
@@ -282,6 +277,7 @@ const addincome = async (req, res) => {
 
     return res.status(200).send(newIncome);
   } catch (error) {
+    console.log(error);
     throw new APIError(error, 500);
   }
 };

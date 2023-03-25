@@ -1,18 +1,10 @@
 const mongoose = require("mongoose");
 
-const categorySchema = new mongoose.Schema(
-  {
-    id: {
-      type: Number,
-    },
-    categoryName: {
-      type: String,
-    },
+const categorySchema = new mongoose.Schema({
+  categoryName: {
+    type: String,
   },
-  {
-    collection: "categories",
-  }
-);
+});
 
 const category = mongoose.model("categories", categorySchema);
 
