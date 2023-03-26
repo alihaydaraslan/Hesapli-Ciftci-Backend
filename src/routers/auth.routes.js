@@ -9,6 +9,9 @@ const {
   listAll,
   find,
   updatePushToken,
+  inviteSomeoneToCompany,
+  responseToInviite,
+  pendingCompanyInvite,
 } = require("../controllers/auth.controller");
 const authValidation = require("../middlewares/validations/auth.validation");
 const { tokenCheck, verifyEmail } = require("../middlewares/auth");
@@ -28,6 +31,19 @@ router.get("/listall", tokenCheck, listAll);
 router.get("/find", tokenCheck, find);
 
 router.patch("/me/expo-push-token", tokenCheck, updatePushToken);
+
+router.post(
+  "/company/invite-someone-to-company",
+  tokenCheck,
+  inviteSomeoneToCompany
+);
+router.get(
+  "/company/pending-company-invites",
+  tokenCheck,
+  pendingCompanyInvite
+);
+
+router.post("/company/response-to-invite", tokenCheck, responseToInviite);
 
 // router.post("/verifyotp", verifyotp);
 

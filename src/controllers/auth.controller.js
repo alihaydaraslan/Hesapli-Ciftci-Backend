@@ -8,6 +8,8 @@ const categorymodel = require("../models/category.model");
 const Income = require("../models/income.model");
 const Expense = require("../models/expense.model");
 const nodemailer = require("nodemailer");
+const { Company } = require("../models/company.model");
+const { CompanyInviteReq } = require("../models/companyInviteReq.modal");
 
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -416,13 +418,39 @@ const updatePushToken = async (req, res) => {
   return new Response(user).success(res);
 };
 
-const addSomeoneToCompany = async (req, res) => {
-  const user = await User.findby(
-    req.user._id,
-    { $set: { expoPushToken: req.body.expoPushToken } },
+const inviteSomeoneToCompany = async (req, res) => {
+  const email = req.body.email;
+  const user = req.user;
+  const tempUser = await User.find({ email: email });
+  const company = await Company.find({ ownerId: user_id });
+  const companyRequest = CompanyInviteReq({
+    senderId: user._id,
+    companyId: company._id,
+    receiverId: tempUser._id,
+    status: "pending",
+  });
+  await companyRequest.save();
+  return new Response(companyRequest).success(res);
+};
+
+const pendingCompanyInvite = async (req, res) => {
+  const companyInvite = await CompanyInviteReq.findOne({
+    receiverId: req.user._id,
+    status: "pending",
+  });
+  return new Response(companyInvite).success(res);
+};
+
+const responseToInviite = async (req, res) => {
+  const companyInvite = await CompanyInviteReq.findByIdAndUpdate(
+    req.body.companyInviteId,
+    {
+      $set: { status: req.body.status },
+    },
     { new: true }
   );
-  return new Response(user).success(res);
+
+  return new Response(companyInvite).success(res);
 };
 
 module.exports = {
@@ -436,4 +464,7 @@ module.exports = {
   listAll,
   find,
   updatePushToken,
+  inviteSomeoneToCompany,
+  pendingCompanyInvite,
+  responseToInviite,
 };
