@@ -441,14 +441,20 @@ const pendingCompanyInvite = async (req, res) => {
   return new Response(companyInvite).success(res);
 };
 
-const responseToInviite = async (req, res) => {
+const responseToInvite = async (req, res) => {
+  const { companyInviteId, status } = req.body;
   const companyInvite = await CompanyInviteReq.findByIdAndUpdate(
-    req.body.companyInviteId,
+    companyInviteId,
     {
-      $set: { status: req.body.status },
+      $set: { status: status },
     },
     { new: true }
   );
+  if (companyInvite && status === "accepted") {
+    const company = await Company.findById(companyInvite.companyId);
+    company.employees.push(companyInvite.receiverId);
+    await company.save();
+  }
 
   return new Response(companyInvite).success(res);
 };
@@ -466,5 +472,5 @@ module.exports = {
   updatePushToken,
   inviteSomeoneToCompany,
   pendingCompanyInvite,
-  responseToInviite,
+  responseToInvite,
 };

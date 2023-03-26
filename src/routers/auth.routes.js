@@ -10,7 +10,7 @@ const {
   find,
   updatePushToken,
   inviteSomeoneToCompany,
-  responseToInviite,
+  responseToInvite,
   pendingCompanyInvite,
 } = require("../controllers/auth.controller");
 const authValidation = require("../middlewares/validations/auth.validation");
@@ -43,7 +43,7 @@ router.get(
   pendingCompanyInvite
 );
 
-router.post("/company/response-to-invite", tokenCheck, responseToInviite);
+router.post("/company/response-to-invite", tokenCheck, responseToInvite);
 
 // router.post("/verifyotp", verifyotp);
 
