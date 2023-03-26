@@ -30,6 +30,9 @@ const userSchema = new mongoose.Schema(
     emailToken: {
       type: String,
     },
+    expoPushToken: {
+      type: String,
+    },
     // phone: {
     //   type: String,
     //   required: true,

@@ -407,6 +407,15 @@ const find = async (req, res) => {
   ]).success(res);
 };
 
+const updatePushToken = async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: { expoPushToken: req.body.expoPushToken } },
+    { new: true }
+  );
+  return new Response(user).success(res);
+};
+
 module.exports = {
   login,
   register,
@@ -417,4 +426,5 @@ module.exports = {
   verifyemail,
   listAll,
   find,
+  updatePushToken,
 };
