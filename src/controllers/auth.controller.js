@@ -416,6 +416,15 @@ const updatePushToken = async (req, res) => {
   return new Response(user).success(res);
 };
 
+const addSomeoneToCompany = async (req, res) => {
+  const user = await User.findby(
+    req.user._id,
+    { $set: { expoPushToken: req.body.expoPushToken } },
+    { new: true }
+  );
+  return new Response(user).success(res);
+};
+
 module.exports = {
   login,
   register,
