@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema(
     expoPushToken: {
       type: String,
     },
+    primalCompany: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+    },
     // phone: {
     //   type: String,
     //   required: true,
