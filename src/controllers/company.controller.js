@@ -8,7 +8,7 @@ const inviteSomeoneToCompany = async (req, res) => {
   const email = req.body.email;
   const user = req.user;
   const tempUser = await User.find({ email: email });
-  const company = await Company.find({ ownerId: user_id });
+  const company = await Company.find({ ownerId: user._id });
   const companyRequest = CompanyInviteReq({
     senderId: user._id,
     companyId: company._id,
