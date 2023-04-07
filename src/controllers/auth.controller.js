@@ -8,7 +8,6 @@ const categorymodel = require("../models/category.model");
 const Company = require("../models/company.model");
 const Income = require("../models/income.model");
 const Expense = require("../models/expense.model");
-const { Company } = require("../models/company.model");
 const nodemailer = require("nodemailer");
 
 let transporter = nodemailer.createTransport({
