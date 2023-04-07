@@ -5,10 +5,10 @@ const APIError = require("../utils/errors");
 const Response = require("../utils/response");
 const { createToken } = require("../middlewares/auth");
 const categorymodel = require("../models/category.model");
+const Company = require("../models/company.model");
 const Income = require("../models/income.model");
 const Expense = require("../models/expense.model");
 const nodemailer = require("nodemailer");
-
 
 let transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -261,6 +261,27 @@ const addcategory = async (req, res) => {
   }
 };
 
+const addcompany = async (req, res) => {
+  try {
+    const { title } = req.body;
+
+    const ownerId = req.user._id;
+
+    const newcompany = new Company({
+      ownerId,
+      title,
+    });
+
+    await newcompany.save();
+    return res.status(201).send(newcompany);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error!",
+    });
+    console.log(error);
+  }
+};
+
 const listAll = async (req, res) => {
   const { categoryName } = req.body;
 
@@ -350,7 +371,7 @@ const find = async (req, res) => {
       categoryId: { $in: categoriesIdArray },
     });
   }
-  
+
   return new Response([
     ...resultCatIdIncome,
     ...resultCatIdExpense,
@@ -377,4 +398,5 @@ module.exports = {
   listAll,
   find,
   updatePushToken,
+  addcompany,
 };

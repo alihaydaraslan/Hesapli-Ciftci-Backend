@@ -33,4 +33,4 @@ const CompanyInviteReq = mongoose.model(
   companyInviteReqSchema
 );
 
-module.exports = { CompanyInviteReq };
+module.exports = CompanyInviteReq ;

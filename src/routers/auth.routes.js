@@ -9,6 +9,7 @@ const {
   listAll,
   find,
   updatePushToken,
+  addcompany
 } = require("../controllers/auth.controller");
 const authValidation = require("../middlewares/validations/auth.validation");
 const { tokenCheck, verifyEmail } = require("../middlewares/auth");
@@ -28,6 +29,8 @@ router.get("/listall", tokenCheck, listAll);
 router.get("/find", tokenCheck, find);
 
 router.patch("/me/expo-push-token", tokenCheck, updatePushToken);
+
+router.post("/addcompany", tokenCheck, addcompany)
 
 
 // router.post("/verifyotp", verifyotp);

@@ -5,8 +5,8 @@ const {
   responseToInvite,
   pendingCompanyInvite,
 } = require("../controllers/company.controller");
-const authValidation = require("../middlewares/validations/auth.validation");
-const { tokenCheck, verifyEmail } = require("../middlewares/auth");
+
+const { tokenCheck } = require("../middlewares/auth");
 
 router.post("/invite-someone-to-company", tokenCheck, inviteSomeoneToCompany);
 router.get("/pending-company-invites", tokenCheck, pendingCompanyInvite);

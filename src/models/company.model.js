@@ -12,7 +12,7 @@ const companySchema = new mongoose.Schema(
       trim: true,
     },
     employees: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "users", required: true },
+      { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     ],
   },
   {
@@ -22,4 +22,4 @@ const companySchema = new mongoose.Schema(
 
 const Company = mongoose.model("Company", companySchema);
 
-module.exports = { Company };
+module.exports = Company ;
