@@ -41,6 +41,21 @@ const addexpense = async (req, res) => {
   }
 };
 
+const expenseGetByPage = async(req, res) => {
+  const { page } = req.query
+  const limit = 10
+  const skip = Number(page - 1) * limit
+  
+  try {
+    const expenseGetByPage = await Expense.find({}).limit(limit).skip(skip)
+
+    return res.status(200).send(expenseGetByPage)
+  } catch (error) {
+    throw new APIError(error,500)
+  }
+}
+
 module.exports = {
   addexpense,
+  expenseGetByPage
 };
