@@ -1,38 +1,30 @@
 const Response = require("../utils/response");
 const APIError = require("../utils/errors");
 const User = require("../models/user.model");
-const Company = require("../models/company.model");
-const CompanyInviteReq = require("../models/companyInviteReq.modal");
+const { Company } = require("../models/company.model");
+const { CompanyInviteReq } = require("../models/companyInviteReq.modal");
 
 const inviteSomeoneToCompany = async (req, res) => {
-  try {
-    const email = req.body.email;
-    const user = req.user;
-    const tempUser = await User.findOne({ email: email });
-    const company = await Company.findOne({ ownerId: user._id });
-    const companyRequest = new CompanyInviteReq({
-      senderId: user._id,
-      companyId: company._id,
-      receiverId: tempUser._id,
-      status: "pending",
-    });
-    await companyRequest.save();
-    return new Response(companyRequest).success(res);
-  } catch (error) {
-    return new APIError("Error!", 400);
-  }
+  const email = req.body.email;
+  const user = req.user;
+  const tempUser = await User.find({ email: email });
+  const company = await Company.find({ ownerId: user_id });
+  const companyRequest = CompanyInviteReq({
+    senderId: user._id,
+    companyId: company._id,
+    receiverId: tempUser._id,
+    status: "pending",
+  });
+  await companyRequest.save();
+  return new Response(companyRequest).success(res);
 };
 
 const pendingCompanyInvite = async (req, res) => {
-  try {
-    const companyInvite = await CompanyInviteReq.findOne({
-      receiverId: req.user._id,
-      status: "pending",
-    });
-    return new Response(companyInvite).success(res);
-  } catch (error) {
-    return new APIError("Error!", 400);
-  }
+  const companyInvite = await CompanyInviteReq.findOne({
+    receiverId: req.user._id,
+    status: "pending",
+  });
+  return new Response(companyInvite).success(res);
 };
 
 const responseToInvite = async (req, res) => {
@@ -53,7 +45,7 @@ const responseToInvite = async (req, res) => {
 
     return new Response(companyInvite).success(res);
   } catch (error) {
-    return new APIError("Error!", 400);
+    throw new APIError("Error!", 400);
   }
 };
 

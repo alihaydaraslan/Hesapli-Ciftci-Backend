@@ -8,6 +8,7 @@ const categorymodel = require("../models/category.model");
 const Company = require("../models/company.model");
 const Income = require("../models/income.model");
 const Expense = require("../models/expense.model");
+const { Company } = require("../models/company.model");
 const nodemailer = require("nodemailer");
 
 let transporter = nodemailer.createTransport({
@@ -244,6 +245,21 @@ const verifyemail = async (req, res) => {
 // };
 
 const me = async (req, res) => {
+  if (!req.user.primalCompany) {
+    const company = await Company.findOne({
+      ownerId: req.user._id,
+    });
+    if (!company) {
+      const createdCompany = new Company({
+        ownerId: req.user._id,
+        title: `${req.user.name}'s company`,
+      });
+      await createdCompany.save();
+      await User.findByIdAndUpdate(req.user._id, {
+        $set: { primalCompany: createdCompany._id },
+      });
+    }
+  }
   return new Response(req.user).success(res);
 };
 
